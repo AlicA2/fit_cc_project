@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "666106442603",
+    "project_id": "smartparkingsystem-d1d0e",
+    "storage_bucket": "smartparkingsystem-d1d0e.firebasestorage.app",
+    "firebase_url": "https://smartparkingsystem-d1d0e-default-rtdb.europe-west1.firebasedatabase.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:666106442603:android:5a3501676eb8796928122e",
+        "android_client_info": {
+          "package_name": "com.example.smart_parking_system_application"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkki2jFqE9EKP5q4GJITo9IXr9RRaULR4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
