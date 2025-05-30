@@ -25,7 +25,7 @@ Ovaj projekat predstavlja sveobuhvatan **Pametni parking sistem** razvijen za ta
 - **Automatsko upravljanje rampom**: rampa se otvara/zatvara na osnovu detekcije vozila pomoću dva HC-SR04 senzora
 
 🎥 **Video demonstracija**:  
-[https://www.youtube.com/watch?v=1XXeH0Wbt0E&ab_channel=AmarAlic](https://www.youtube.com/watch?v=1XXeH0Wbt0E&ab_channel=AmarAlic)
+https://www.youtube.com/watch?v=dUwmLr-wkc8&t=4885s&ab_channel=FITMostar       Prezentacija kreće: 1:08:47
 *Napomena: Funkcionalnosti rezervacije parking mjesta i automatskog upravljanja rampom nisu prikazane u ovom videu.*
 
 ## ⚠️ Napomena
