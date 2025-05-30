@@ -125,7 +125,6 @@ void loop() {
   }
 }
 
-
 void updateLCD(int occupied) {
   lcd.clear();
 

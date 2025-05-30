@@ -73,7 +73,9 @@ class _RezervacijaScreenState extends State<RezervacijaScreen> {
 
 
   bool get _isFormValid {
-    return _idController.text.trim().isNotEmpty &&
+    return _idController.text
+        .trim()
+        .isNotEmpty &&
         _selectedDate != null &&
         _selectedTime != null &&
         _selectedSpot != null;
@@ -90,13 +92,65 @@ class _RezervacijaScreenState extends State<RezervacijaScreen> {
       _selectedTime!.hour,
     );
 
-    final differenceInMinutes = reservationDateTime.difference(now).inMinutes;
+    final differenceInMinutes = reservationDateTime
+        .difference(now)
+        .inMinutes;
     final differenceInHours = (differenceInMinutes / 60).ceil();
-    return (differenceInHours > 0 ? differenceInHours : 0) * 3.0;
+    final brojSati = (differenceInHours > 0 ? differenceInHours : 0);
+    final double basePrice = brojSati * 3.0;
+
+    double discount = 0.0;
+
+    if (brojSati >= 50 && brojSati <= 100) {
+      discount = 0.05;
+    } else if (brojSati > 100 && brojSati <= 150) {
+      discount = 0.10;
+    } else if (brojSati > 150 && brojSati <= 200) {
+      discount = 0.15;
+    } else if (brojSati > 200 && brojSati <= 300) {
+      discount = 0.25;
+    } else if (brojSati > 300) {
+      discount = 0.35;
+    }
+
+    return basePrice * (1 - discount);
+  }
+
+  int get discountPercentage {
+    if (_selectedDate == null || _selectedTime == null) return 0;
+
+    final now = DateTime.now();
+    final reservationDateTime = DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      _selectedTime!.hour,
+    );
+
+    final differenceInMinutes = reservationDateTime
+        .difference(now)
+        .inMinutes;
+    final differenceInHours = (differenceInMinutes / 60).ceil();
+    final brojSati = (differenceInHours > 0 ? differenceInHours : 0);
+
+    if (brojSati >= 50 && brojSati <= 100) {
+      return 5;
+    } else if (brojSati > 100 && brojSati <= 150) {
+      return 10;
+    } else if (brojSati > 150 && brojSati <= 200) {
+      return 15;
+    } else if (brojSati > 200 && brojSati <= 300) {
+      return 25;
+    } else if (brojSati > 300) {
+      return 35;
+    }
+
+    return 0;
   }
 
   Future<List<ParkingSpot>> fetchFreeParkingSpots() async {
-    final DatabaseReference ref = FirebaseDatabase.instance.ref("parking_status");
+    final DatabaseReference ref = FirebaseDatabase.instance.ref(
+        "parking_status");
     final DataSnapshot snapshot = await ref.get();
 
     List<ParkingSpot> freeSpots = [];
@@ -119,7 +173,7 @@ class _RezervacijaScreenState extends State<RezervacijaScreen> {
       context: context,
       initialDate: today,
       firstDate: today,
-      lastDate: today.add(const Duration(days: 3)),
+      lastDate: today.add(const Duration(days: 90)),
       locale: const Locale('hr'),
     );
 
@@ -140,7 +194,8 @@ class _RezervacijaScreenState extends State<RezervacijaScreen> {
       minimalHour = now.hour + 1;
       if (minimalHour > 23) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Danas više nije moguće rezervisati vrijeme.")),
+          const SnackBar(
+              content: Text("Danas više nije moguće rezervisati vrijeme.")),
         );
         return;
       }
@@ -164,7 +219,8 @@ class _RezervacijaScreenState extends State<RezervacijaScreen> {
           DateUtils.isSameDay(_selectedDate!, now) &&
           picked.hour < minimalHour) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Za danas možete odabrati samo vrijeme od $minimalHour:00 nadalje.")),
+          SnackBar(content: Text(
+              "Za danas možete odabrati samo vrijeme od $minimalHour:00 nadalje.")),
         );
         return;
       }
@@ -186,7 +242,8 @@ class _RezervacijaScreenState extends State<RezervacijaScreen> {
     final amount = _price.toInt();
     if (!_isFormValid || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Popunite sve podatke i odaberite validan termin.")),
+        const SnackBar(
+            content: Text("Popunite sve podatke i odaberite validan termin.")),
       );
       return;
     }
@@ -195,9 +252,11 @@ class _RezervacijaScreenState extends State<RezervacijaScreen> {
     if (success) {
       final String rfid = _idController.text.trim();
       final String entryDate = DateFormat('yyyy-MM-dd').format(_selectedDate!);
-      final String entryTime = _selectedTime!.hour.toString().padLeft(2, '0') + ":00";
+      final String entryTime = _selectedTime!.hour.toString().padLeft(2, '0') +
+          ":00";
 
-      final DatabaseReference ref = FirebaseDatabase.instance.ref("parking/$rfid");
+      final DatabaseReference ref = FirebaseDatabase.instance.ref(
+          "parking/$rfid");
 
       await ref.set({
         "rfid": rfid,
@@ -226,7 +285,8 @@ class _RezervacijaScreenState extends State<RezervacijaScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Plaćanje uspješno! Rezervisano za $entryDate u $entryTime."),
+          content: Text(
+              "Plaćanje uspješno! Rezervisano za $entryDate u $entryTime."),
           backgroundColor: Colors.green,
         ),
       );
@@ -240,94 +300,146 @@ class _RezervacijaScreenState extends State<RezervacijaScreen> {
   @override
   Widget build(BuildContext context) {
     final formattedDateTime = (_selectedDate != null && _selectedTime != null)
-        ? '${DateFormat('dd.MM.yyyy').format(_selectedDate!)} u ${_selectedTime!.hour.toString().padLeft(2, '0')}:00'
+        ? '${DateFormat('dd.MM.yyyy').format(_selectedDate!)} u ${_selectedTime!
+        .hour.toString().padLeft(2, '0')}:00'
         : 'Odaberite datum i vrijeme';
 
-    final priceText = _price > 0 ? 'Plati \$${_price.toStringAsFixed(2)}' : 'Plati';
+    final priceText = _price > 0
+        ? 'Plati \$${_price.toStringAsFixed(2)}'
+        : 'Plati';
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Rezervacija mjesta")),
+      appBar: AppBar(
+        title: const Text("🅿️ Rezervacija mjesta"),
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         child: SingleChildScrollView(
           child: Column(
             children: [
               Text(
-                "Trenutno na parkingu: $_brojNaParkingu / 2",
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black54),
+                "🚗 Trenutno na parkingu: $_brojNaParkingu / 2",
+                style: const TextStyle(fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueAccent),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
+
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text(
-                  "Kartica",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                child: Text("💳 Kartica:", style: TextStyle(fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueAccent)),
               ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _idController,
-                decoration: InputDecoration(
-                  hintText: "Vaša kartica",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              const SizedBox(height: 10),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black26,
+                        blurRadius: 6,
+                        offset: Offset(0, 3))
+                  ],
                 ),
-              ),
-              const SizedBox(height: 24),
-              _isLoadingSpots
-                  ? const CircularProgressIndicator()
-                  : DropdownButtonFormField<ParkingSpot>(
-                value: _selectedSpot,
-                items: (_brojNaParkingu >= 2 || _spots.isEmpty)
-                    ? [
-                  const DropdownMenuItem<ParkingSpot>(
-                    value: null,
-                    child: Text("Nema slobodnih mjesta"),
-                  )
-                ]
-                    : _spots.map((spot) {
-                  return DropdownMenuItem(
-                    value: spot,
-                    child: Text("Mjesto ${spot.id}"),
-                  );
-                }).toList(),
-                onChanged: (_brojNaParkingu >= 2 || _spots.isEmpty)
-                    ? null
-                    : (spot) {
-                  setState(() {
-                    _selectedSpot = spot;
-                  });
-                },
-                decoration: InputDecoration(
-                  labelText: "Odaberite parking mjesto",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () => _selectDate(context),
-                icon: const Icon(Icons.event, color: Colors.white),
-                label: Text(
-                  formattedDateTime,
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                child: TextField(
+                  controller: _idController,
+                  decoration: InputDecoration(
+                    hintText: "Unesite vašu karticu",
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
                   ),
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 24),
+
+              Text("🅿️ Odaberite parking mjesto:", style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueAccent)),
+              const SizedBox(height: 10),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black26,
+                        blurRadius: 6,
+                        offset: Offset(0, 3))
+                  ],
+                ),
+                child: DropdownButtonFormField<ParkingSpot>(
+                  value: _selectedSpot,
+                  items: (_brojNaParkingu >= 2 || _spots.isEmpty)
+                      ? [
+                    const DropdownMenuItem<ParkingSpot>(
+                      value: null,
+                      child: Text("Nema slobodnih mjesta"),
+                    )
+                  ]
+                      : _spots.map((spot) {
+                    return DropdownMenuItem(
+                      value: spot,
+                      child: Text(
+                          "Mjesto ${spot.id}", style: TextStyle(fontSize: 18)),
+                    );
+                  }).toList(),
+                  onChanged: (_brojNaParkingu >= 2 || _spots.isEmpty)
+                      ? null
+                      : (spot) {
+                    setState(() {
+                      _selectedSpot = spot;
+                    });
+                  },
+                  decoration: const InputDecoration(border: InputBorder.none),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              Text("📅 Odaberite datum i vrijeme:", style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueAccent)),
+              const SizedBox(height: 10),
               ElevatedButton(
-                onPressed: () {
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 16, horizontal: 30),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  elevation: 5,
+                ),
+                onPressed: () => _selectDate(context),
+                child: Text(
+                  formattedDateTime,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              if (discountPercentage > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    "🎁 Popust: $discountPercentage%",
+                    style: TextStyle(fontSize: 16,
+                        color: Colors.green,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+              const SizedBox(height: 40),
+
+              GestureDetector(
+                onTap: () {
                   if (_brojNaParkingu >= 2) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Parking je trenutno popunjen.")),
+                      const SnackBar(
+                          content: Text("Parking je trenutno popunjen.")),
                     );
                     return;
                   }
@@ -336,20 +448,39 @@ class _RezervacijaScreenState extends State<RezervacijaScreen> {
                     _handlePayment();
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Molimo unesite sve podatke i odaberite mjesto.")),
+                      const SnackBar(content: Text(
+                          "Molimo unesite sve podatke i odaberite mjesto.")),
                     );
                   }
                 },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 40),
-                  backgroundColor: Colors.blue,
-                  shape: RoundedRectangleBorder(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Colors.blueAccent, Colors.lightBlue],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 6,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
                   ),
-                ),
-                child: Text(
-                  priceText,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                  child: Center(
+                    child: Text(
+                      "💰 $priceText",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
